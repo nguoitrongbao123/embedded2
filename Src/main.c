@@ -83,7 +83,7 @@ void HCSR04_Read (void)
 }
 void display_lcd_and_leddo(float distance)
 {
-  HAL_Delay(80);
+  HAL_Delay(50);
   lcd_clear();
   lcd_send_cmd(0xC2); // Set cursor to second line, first column
   snprintf(buff, sizeof(buff), "%.2f cm", distance); // Convert float to string with 2 decimal places
