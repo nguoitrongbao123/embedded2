@@ -4,6 +4,7 @@
 #include "string.h"
 #include "stdio.h"
 #include "led.h"
+#include "stm32f4xx_hal.h"
 I2C_HandleTypeDef hi2c1;
 
 TIM_HandleTypeDef htim1;
@@ -30,6 +31,7 @@ uint32_t IC_Val2 = 0;
 uint32_t Difference = 0;
 uint8_t Is_First_Captured = 0;  // is the first value captured ?
 float Distance  = 0;
+volatile uint8_t ledState = 1;
 #define TRIG_PIN GPIO_PIN_9
 #define TRIG_PORT GPIOA
 char buff[16];
@@ -81,7 +83,7 @@ void HCSR04_Read (void)
 }
 void display_lcd_and_leddo(float distance)
 {
-  HAL_Delay(50);
+  HAL_Delay(80);
   lcd_clear();
   lcd_send_cmd(0xC2); // Set cursor to second line, first column
   snprintf(buff, sizeof(buff), "%.2f cm", distance); // Convert float to string with 2 decimal places
@@ -91,67 +93,67 @@ void display_lcd_and_leddo(float distance)
   lcd_send_cmd(0x80); // Set cursor to first line, first column
   if (distance > 25)
   {
-    lcd_send_string("VaCa: 0");
+    lcd_send_string("VaCa: 0  HD: 1");
 
     TIM4->ARR = 2000;
   }
   else if (distance >= 0 && distance < 2)
   {
-    lcd_send_string("VaCa: 1");
+    lcd_send_string("VaCa: 1  HD: 1");
     if (TIM4->CNT > 99 ) TIM4->CNT = 0;
     TIM4->ARR = 99;
   }
   else if (distance >= 2 && distance < 4)
     {
-      lcd_send_string("VaCa: 1");
+      lcd_send_string("VaCa: 1  HD: 1");
       if (TIM4->CNT > 110 ) TIM4->CNT = 0;
       TIM4->ARR = 110;
     }
   else if (distance >= 4 && distance < 6)
       {
-        lcd_send_string("VaCa: 1");
+        lcd_send_string("VaCa: 1  HD: 1");
         if (TIM4->CNT > 124 ) TIM4->CNT = 0;
         TIM4->ARR = 124;
       }
   else if (distance >= 6 && distance < 8)
       {
-        lcd_send_string("VaCa: 1");
+        lcd_send_string("VaCa: 1  HD: 1");
         if (TIM4->CNT > 141 ) TIM4->CNT = 0;
         TIM4->ARR = 141;
       }
   else if (Distance > 8 && Distance <= 10)
       {
-	  lcd_send_string("VaCa: 1");
+	  lcd_send_string("VaCa: 1  HD: 1");
 	  if (TIM4->CNT > 166 ) TIM4->CNT = 0;
 	          TIM4->ARR = 166;
       }
       else if (Distance > 10 && Distance <= 12)
       {
-    	  lcd_send_string("VaCa: 1");
+    	  lcd_send_string("VaCa: 1  HD: 1");
     	  if (TIM4->CNT > 199 ) TIM4->CNT = 0;
     	          TIM4->ARR = 199;
       }
       else if (Distance > 12 && Distance <= 14)
       {
-    	  lcd_send_string("VaCa: 1");
+    	  lcd_send_string("VaCa: 1  HD: 1");
     	  if (TIM4->CNT > 249 ) TIM4->CNT = 0;
     	          TIM4->ARR = 249;
       }
       else if (Distance > 14 && Distance <= 16)
       {
-    	  lcd_send_string("VaCa: 1");
+    	  lcd_send_string("VaCa: 1  HD: 1");
     	  if (TIM4->CNT > 332 ) TIM4->CNT = 0;
     	          TIM4->ARR = 332;
       }
       else if (Distance > 16 && Distance <= 18)
       {
-    	  lcd_send_string("VaCa: 1");
+    	  lcd_send_string("VaCa: 1  HD: 1");
     	  if (TIM4->CNT > 499 ) TIM4->CNT = 0;
     	          TIM4->ARR = 499;
       }
       else if (Distance > 18 && Distance <= 25)
       {
-    	  lcd_send_string("VaCa: 1");
+    	  lcd_send_string("VaCa: 1  HD: 1");
     	  if (TIM4->CNT > 999 ) TIM4->CNT = 0;
     	          TIM4->ARR = 999;
       }
@@ -170,15 +172,25 @@ int main(void)
   TIM3_PWM_Init();
   HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_1);
   lcd_init();
+  Cauhinh();
   lcd_send_cmd(0x01); // Clear the screen initially
   Ledxanh();
   Leddo();
-  while (1)
-  {
-	  HCSR04_Read();
-	  display_lcd_and_leddo(Distance);
-	  nhayledxanh();
-      nhayleddo();
+  while (1) {
+      if (ledState == 1) {
+      	HCSR04_Read();
+        display_lcd_and_leddo(Distance);
+        nhayledxanh();
+      	nhayleddo();
+      } else {
+          // Đảm bảo PA5 tắt nếu cờ ledState = 0
+          HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
+          HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_RESET);
+          lcd_clear();
+          lcd_send_cmd(0x80);
+          lcd_send_string("HD: 0");
+          HAL_Delay(1000);
+      }
   }
 }
 
@@ -277,25 +289,45 @@ static void MX_GPIO_Init(void)
   GPIOA->MODER |=  (0x1 << (9 * 2)); // Output mode cho Pin 9
   // Đặt OTYPER (GPIOx_OTYPER) thành 0 cho Push-Pull
   GPIOA->OTYPER &= ~(1 << 9); // Push-Pull cho Pin 9
-
-
   // Đặt PUPDR (GPIOx_PUPDR) thành 00 cho No Pull-up, Pull-down
   GPIOA->PUPDR &= ~(0x3 << (9 * 2)); // No Pull-up, Pull-down cho Pin 9
   GPIOA->OSPEEDR &= ~(0x3 << (9 * 2)); // Low speed cho Pin 9
   GPIOA->BSRR = (1 << (9 + 16)); // Reset Pin 9 (đặt mức thấp)
+}
+void Cauhinh(void){
+
+	    __HAL_RCC_SYSCFG_CLK_ENABLE();
+
+	    __HAL_RCC_GPIOB_CLK_ENABLE();
+	    GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+
+	    // Cấu hình PA1 (Ngắt ngoài)
+	    GPIO_InitStruct.Pin = GPIO_PIN_4;  // Chuyển sang cấu hình cho PB4
+	       GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;  // Cấu hình ngắt rising và falling
+	       GPIO_InitStruct.Pull = GPIO_PULLDOWN;  // Sử dụng Pull-down để giữ PB4 ở LOW khi không có tín hiệu
+	       HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);  // Cấu hình PB4
+
+	       // B5: Cấu hình ngắt ngoài EXTI4 (PB4)
+	       HAL_NVIC_SetPriority(EXTI4_IRQn, 2, 0);   // Thiết lập độ ưu tiên cho EXTI4
+	       HAL_NVIC_EnableIRQ(EXTI4_IRQn);            // Bật ngắt EXTI4
 
 }
+// Callback ngắt cho PA1
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+    if (GPIO_Pin == GPIO_PIN_4) {
+        if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_4) == GPIO_PIN_SET) {
+            ledState = 1;
+        } else {
+            ledState = 0;
+        }
+    }
+}
+// Xử lý ngắt EXTI1
+void EXTI4_IRQHandler(void) {
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_4);  // Xử lý ngắt trên PB4
+}
 
-
-
-/* USER CODE BEGIN 4 */
-
-/* USER CODE END 4 */
-
-/**
-  * @brief  This function is executed in case of error occurrence.
-  * @retval None
-  */
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
