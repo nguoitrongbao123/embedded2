@@ -1,57 +1,5 @@
 #include "led.h"
 
-void LedDo_Update(float Distance)
-{
-	int a=0;
-    if (Distance <= 2)
-    {
-    	a = 99;
-    }
-    else if (Distance > 2 && Distance <= 4)
-    {
-    	a = 110;
-    }
-    else if (Distance > 4 && Distance <= 6)
-    {
-    	a = 124;
-    }
-    else if (Distance > 6 && Distance <= 8)
-    {
-    	a = 141;
-    }
-    else if (Distance > 8 && Distance <= 10)
-    {
-    	a = 166;
-    }
-    else if (Distance > 10 && Distance <= 12)
-    {
-    	a = 199;
-    }
-    else if (Distance > 12 && Distance <= 14)
-    {
-    	a = 249;
-    }
-    else if (Distance > 14 && Distance <= 16)
-    {
-    	a = 332;
-    }
-    else if (Distance > 16 && Distance <= 18)
-    {
-    	a = 499;
-    }
-    else if (Distance > 18 && Distance <= 25)
-    {
-    	a = 999;
-    }
-
-
-    // Cập nhật giá trị ARR và khởi động lại TIM4 nếu cần
-    if (Distance < 25)
-    {
-    	TIM4->ARR = a;
-    }
-
-}
 void Ledxanh(void){
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN; // Bật clock cho GPIOA
 	GPIOA->MODER &= ~(GPIO_MODER_MODER0); // Reset PA0 mode
