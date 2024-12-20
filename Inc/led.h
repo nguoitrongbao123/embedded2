@@ -3,10 +3,6 @@
 
 #include <stdint.h>       // Thư viện chuẩn cho các kiểu số nguyên có độ dài cố định
 #include "stm32f4xx.h"    // Thư viện cho STM32F4
-
-// Hàm khởi tạo LED
-
-void LedDo_Update(float Distance);
 void Ledxanh(void);
 void Leddo(void);
 void nhayledxanh();
