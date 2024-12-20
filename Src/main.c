@@ -281,7 +281,6 @@ static void MX_GPIO_Init(void)
 
   // Đặt PUPDR (GPIOx_PUPDR) thành 00 cho No Pull-up, Pull-down
   GPIOA->PUPDR &= ~(0x3 << (9 * 2)); // No Pull-up, Pull-down cho Pin 9
-  GPIOA->PUPDR &= ~(0x3 << (10 * 2)); // No Pull-up, Pull-down cho Pin 10
   GPIOA->OSPEEDR &= ~(0x3 << (9 * 2)); // Low speed cho Pin 9
   GPIOA->BSRR = (1 << (9 + 16)); // Reset Pin 9 (đặt mức thấp)
 
